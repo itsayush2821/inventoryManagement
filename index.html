@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <title>Inventory Management System</title>
+</head>
+<body>
+    <h1>Inventory Management System</h1>
+    <form id="inventory-form">
+        <label for="item-name">Item Name:</label>
+        <input type="text" id="item-name" required><br><br>
+        
+        <label for="description">Description:</label>
+        <input type="text" id="description" required><br><br>
+        
+        <label for="price">Price:</label>
+        <input type="number" id="price" required><br><br>
+        
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" required><br><br>
+
+        <button type="submit">Add Item</button>
+    </form>
+
+    <div id="inventory-list">
+        <!-- Display the inventory items here -->
+    </div>
+
+    <script>
+        // Function to add an item to the inventory
+        function addItem(event) {
+            event.preventDefault();
+            
+            const itemName = document.getElementById('item-name').value;
+            const description = document.getElementById('description').value;
+            const price = parseFloat(document.getElementById('price').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            // Create a new item object
+            const newItem = {
+                itemName,
+                description,
+                price,
+                quantity
+            };
+
+            // Retrieve existing inventory data from localStorage
+            // const inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+
+            // Add the new item to the inventory
+            // inventory.push(newItem);
+
+            // Update the inventory data in localStorage
+            // localStorage.setItem('inventory', JSON.stringify(inventory));
+
+            axios.post('https://crudcrud.com/api/6cf7c4bc6e674e25b61aaa9029df416d/items', newItem)
+
+            // Clear the form fields
+            document.getElementById('item-name').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('quantity').value = '';
+
+            // Refresh the inventory list
+            displayInventory();
+        }
+
+        // Function to display the inventory
+        function displayInventory() {
+            // const inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+            // let inventory = []
+            axios.get('https://crudcrud.com/api/6cf7c4bc6e674e25b61aaa9029df416d/items').then((res)=>{
+                console.log(res)
+                const inventory=res.data
+
+                const inventoryList = document.getElementById('inventory-list');
+            
+            // Clear existing list items
+            inventoryList.innerHTML = '';
+
+            // Display each item in the inventory
+            inventory.forEach((item, index) => {
+                const listItem = document.createElement('div');
+                listItem.innerHTML = `
+                    <p><strong>Item Name:</strong> ${item.itemName}</p>
+                    <p><strong>Description:</strong> ${item.description}</p>
+                    <p><strong>Price:</strong> $${item.price}</p>
+                    <p><strong>Quantity:</strong> ${item.quantity}</p>
+                    <button onclick="updateItem('${item._id}')">Buy</button>
+                `;
+                inventoryList.appendChild(listItem);
+            });
+            })
+           
+        }
+
+
+
+        function updateItem(itemId) {
+        const buyQuantity = parseInt(prompt("Enter how much to be bought:"));
+        if (!isNaN(buyQuantity) && buyQuantity >= 0) {
+            axios.get(`https://crudcrud.com/api/6cf7c4bc6e674e25b61aaa9029df416d/items/${itemId}`)
+                .then((response) => {
+                    const item = response.data;
+                    const newValue = {
+                        itemName: item.itemName,
+                        description: item.description,
+                        price: item.price,
+                        quantity: item.quantity - buyQuantity
+                    };
+
+                    axios.put(`https://crudcrud.com/api/6cf7c4bc6e674e25b61aaa9029df416d/items/${itemId}`, newValue)
+                        .then(() => {
+                            // Refresh the inventory list after updating the item
+                            displayInventory();
+                        })
+                        .catch((error) => {
+                            console.error('Error updating item:', error);
+                        });
+                })
+                .catch((error) => {
+                    console.error('Error fetching item:', error);
+                });
+        } else {
+            alert('Invalid quantity. Please enter a non-negative number.');
+        }
+    }
+
+
+
+        // Initialize the application by displaying the inventory
+        displayInventory();
+
+        // Add an event listener to the form for adding items
+        document.getElementById('inventory-form').addEventListener('submit', addItem);
+    </script>
+</body>
+</html>
